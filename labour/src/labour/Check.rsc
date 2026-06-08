@@ -24,9 +24,9 @@ import String;
  */
 
 
-// 1. A helper to extract all Hold nodes from the wall
-list[Hold] getAllHolds(BoulderingWall wall) {
-  list[Hold] allHolds = [];
+// A helper to extract all Hold nodes from the wall
+list[HoldAst] getAllHolds(BoulderingWallAst wall) {
+  list[HoldAst] allHolds = [];
   for (v <- wall.volumes) {
     switch (v) {
       case circle(props):
@@ -46,7 +46,7 @@ list[Hold] getAllHolds(BoulderingWall wall) {
 }
 
 // 2. A helper to get a specific hold by its ID
-Hold getHoldById(BoulderingWall wall, str id) {
+HoldAst getHoldById(BoulderingWallAst wall, str id) {
   for (h <- getAllHolds(wall)) {
     if (h.id == id) return h;
   }
@@ -54,7 +54,7 @@ Hold getHoldById(BoulderingWall wall, str id) {
 }
 
 // 3. A helper to extract all hold IDs referenced in a Route
-list[str] getRouteHoldIds(Route r) {
+list[str] getRouteHoldIds(RouteAst r) {
   list[str] ids = [];
   for (p <- r.props) {
     if (routeHolds(steps) := p) {
@@ -69,20 +69,29 @@ list[str] getRouteHoldIds(Route r) {
   return ids;
 }
 
-bool checkBoulderWallConfiguration(BoulderingWall wall){
-  bool numberOfHolds = checkNumberOfHolds(wall);
-  bool startingLabelLimit = checkStartingHoldsTotalLimit(wall);
-  bool unique_end_hold = checkUniqueEndHold(wall);
-  
-  // Rule 1: Every wall must have at least one volume and one route
-  bool basicWallReqs = size(wall.routes) > 0 && size(wall.volumes) > 0;
+set[str] getHoldColoursSet(HoldAst h) {
+  for (p <- h.props) {
+    if (holdColours(cols) := p) return toSet(cols);
+  }
+  return {};
+}
 
-  return (numberOfHolds && startingLabelLimit && unique_end_hold && basicWallReqs);
+bool checkBoulderWallConfiguration(BoulderingWallAst wall){
+  bool hasRequiredNodes = size(wall.routes) > 0 && size(wall.volumes) > 0;
+  
+  bool holdsCount      = checkNumberOfHolds(wall);
+  bool startHoldLimit  = checkStartingHoldsTotalLimit(wall);
+  bool uniqueEndHold   = checkUniqueEndHold(wall);
+  bool maxOneSplit     = checkMaxOneSplit(wall);
+  bool colorMatch      = checkRouteColours(wall);
+  bool propBounds      = checkHoldProperties(wall);
+
+  return (hasRequiredNodes && holdsCount && startHoldLimit && uniqueEndHold && maxOneSplit && colorMatch && propBounds);
 }
 
 
 // Check that there are at least two holds in the wall
-bool checkNumberOfHolds(BoulderingWall wall) {
+bool checkNumberOfHolds(BoulderingWallAst wall) {
   for (r <- wall.routes) {
     if (size(getRouteHoldIds(r)) < 2) {
       println("Validation Failed: Route <r.id> has less than 2 holds.");
@@ -91,19 +100,17 @@ bool checkNumberOfHolds(BoulderingWall wall) {
   }
   return true;
 }
+
 // Check that routes have between zero and two hand start holds
-bool checkStartingHoldsTotalLimit(BoulderingWall wall) {
+bool checkStartingHoldsTotalLimit(BoulderingWallAst wall) {
   for (r <- wall.routes) {
     int startCount = 0;
     list[str] routeIds = getRouteHoldIds(r);
     
     for (id <- routeIds) {
-      Hold h = getHoldById(wall, id);
-      // Check if this hold has a startHold property
+      HoldAst h = getHoldById(wall, id);
       for (prop <- h.props) {
-        if (startHold(_) := prop) {
-          startCount += 1;
-        }
+        if (startHold(_) := prop) startCount += 1;
       }
     }
     
@@ -115,13 +122,46 @@ bool checkStartingHoldsTotalLimit(BoulderingWall wall) {
   return true;
 }
 
+// Rule 4 & 8: At most one split initiation per route (prevents split-after-merge violations)
+bool checkMaxOneSplit(BoulderingWallAst wall) {
+  for (r <- wall.routes) {
+    int splitsStarted = 0;
+    bool currentlyInSplit = false;
+    
+    for (p <- r.props) {
+      if (routeHolds(steps) := p) {
+        for (step <- steps) {
+          switch (step) {
+            case singleHold(_): {
+              // We are back to a single hold (merged)
+              currentlyInSplit = false;
+            }
+            case splitHolds(_, _): {
+              // If we weren't already in a split, this is a new split starting!
+              if (!currentlyInSplit) {
+                splitsStarted += 1;
+                currentlyInSplit = true;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    if (splitsStarted > 1) {
+      println("Validation Failed: Route <r.id> starts a split more than once (violates Rule 4/8).");
+      return false;
+    }
+  }
+  return true;
+}
+
 // This function will insure that there is only one hold assign to end hold
-bool checkUniqueEndHold(BoulderingWall wall){
+bool checkUniqueEndHold(BoulderingWallAst wall){
   for (r <- wall.routes) {
     int endCount = 0;
     bool hasSplit = false;
     
-    // Check if the route has a split
     for (p <- r.props) {
       if (routeHolds(steps) := p) {
         for (step <- steps) {
@@ -130,10 +170,9 @@ bool checkUniqueEndHold(BoulderingWall wall){
       }
     }
 
-    // Count end holds
     list[str] routeIds = getRouteHoldIds(r);
     for (id <- routeIds) {
-      Hold h = getHoldById(wall, id);
+      HoldAst h = getHoldById(wall, id);
       for (prop <- h.props) {
         if (endHold() := prop) endCount += 1;
       }
@@ -151,8 +190,29 @@ bool checkUniqueEndHold(BoulderingWall wall){
   return true;
 }
 
+bool checkRouteColours(BoulderingWallAst wall) {
+  for (r <- wall.routes) {
+    list[str] routeIds = getRouteHoldIds(r);
+    if (size(routeIds) == 0) continue;
+
+    HoldAst firstHold = getHoldById(wall, routeIds[0]);
+    set[str] sharedColours = getHoldColoursSet(firstHold);
+
+    for (id <- routeIds) {
+      HoldAst h = getHoldById(wall, id);
+      sharedColours = sharedColours & getHoldColoursSet(h);
+    }
+
+    if (size(sharedColours) == 0) {
+      println("Validation Failed: Holds in Route <r.id> do not share a common colour.");
+      return false;
+    }
+  }
+  return true;
+}
+
 // Rules 12, 13, 14: Ensure bounds for angles (0-359) and mandatory properties
-bool checkHoldProperties(BoulderingWall wall) {
+bool checkHoldProperties(BoulderingWallAst wall) {
   for (h <- getAllHolds(wall)) {
     bool hasPos = false;
     bool hasShape = false;

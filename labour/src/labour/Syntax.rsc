@@ -21,8 +21,8 @@ lexical String = "\"" ![\"]* "\""; // Basic string matching
 
 start syntax BoulderingWall 
   = "bouldering_wall" String name "{" 
-      "routes" "[" {Route ","}* "]" ","? 
-      "volumes" "[" {Volume ","}* "]" //Definition
+      "routes" "[" {Route ","}* "]" "," 
+      "volumes" "[" {Volume ","}* "]" 
     "}";
 
 // Numbers

@@ -21,39 +21,35 @@ str stripQuotes(str s) = substring(s, 1, size(s) - 1);
 
 // --- Entry Point ---
 
-BoulderingWall cst2ast(start[BoulderingWall] W) = cst2ast(W.top);
+labour::AST::BoulderingWallAst cst2ast(start[BoulderingWall] W) = cst2ast(W.top);
 
 // --- Main Wall ---
-
-BoulderingWall cst2ast(BoulderingWall W) {
+labour::AST::BoulderingWallAst cst2ast(BoulderingWall W) {
   switch (W) {
-    case (BoulderingWall)`bouldering_wall <String name> { routes [ <{Route ","}* rts> ] volumes [ <{Volume ","}* vols> ] }`:
+    case (BoulderingWall)`bouldering_wall <String name> { routes [ <{Route ","}* rts> ] , volumes [ <{Volume ","}* vols> ] }`:
       return wall(stripQuotes("<name>"), [cst2ast(r) | r <- rts], [cst2ast(v) | v <- vols], src=W@\loc);
     default: throw "Unhandled BoulderingWall: <W>";
   }
 }
 
 // --- Shared Data ---
-
-Point cst2ast(Point P) {
+labour::AST::PointAst cst2ast(Point P) {
   switch (P) {
-    case (Point)`{ x : <Int x> , y : <Int y> }`:
-      return point(toInt("<x>"), toInt("<y>"), src=P@\loc);
+    case (Point)`{ x : <Int x> , y : <Int y> }`: return point(toInt("<x>"), toInt("<y>"), src=P@\loc);
     default: throw "Unhandled Point: <P>";
   }
 }
 
 // --- Holds ---
 
-Hold cst2ast(Hold H) {
+labour::AST::HoldAst cst2ast(Hold H) {
   switch (H) {
-    case (Hold)`hold <HoldIdString id> { <{HoldProp ","}* props> }`:
-      return hold(stripQuotes("<id>"), [cst2ast(p) | p <- props], src=H@\loc);
+    case (Hold)`hold <HoldIdString id> { <{HoldProp ","}* props> }`: return hold(stripQuotes("<id>"), [cst2ast(p) | p <- props], src=H@\loc);
     default: throw "Unhandled Hold: <H>";
   }
 }
 
-HoldProp cst2ast(HoldProp HP) {
+labour::AST::HoldPropAst cst2ast(HoldProp HP) {
   switch (HP) {
     case (HoldProp)`pos : <Point p>`: return holdPos(cst2ast(p), src=HP@\loc);
     case (HoldProp)`pos : { angle : <Nat a> }`: return holdAngle(toInt("<a>"), src=HP@\loc);
@@ -68,15 +64,14 @@ HoldProp cst2ast(HoldProp HP) {
 
 // --- Routes ---
 
-Route cst2ast(Route R) {
+labour::AST::RouteAst cst2ast(Route R) {
   switch (R) {
-    case (Route)`bouldering_route <AlphanumericString id> { <{RouteProp ","}* props> }`:
-      return route(stripQuotes("<id>"), [cst2ast(p) | p <- props], src=R@\loc);
+    case (Route)`bouldering_route <AlphanumericString id> { <{RouteProp ","}* props> }`: return route(stripQuotes("<id>"), [cst2ast(p) | p <- props], src=R@\loc);
     default: throw "Unhandled Route: <R>";
   }
 }
 
-RouteProp cst2ast(RouteProp RP) {
+labour::AST::RoutePropAst cst2ast(RouteProp RP) {
   switch (RP) {
     case (RouteProp)`grade : <AlphanumericString g>`: return grade(stripQuotes("<g>"), src=RP@\loc);
     case (RouteProp)`grid_base_point <Point p>`: return gridBasePoint(cst2ast(p), src=RP@\loc);
@@ -85,29 +80,25 @@ RouteProp cst2ast(RouteProp RP) {
   }
 }
 
-RouteStep cst2ast(RouteStep RS) {
+labour::AST::RouteStepAst cst2ast(RouteStep RS) {
   switch (RS) {
-    case (RouteStep)`<HoldIdString id>`: 
-      return singleHold(stripQuotes("<id>"), src=RS@\loc);
-    case (RouteStep)`{ <HoldIdString id1> , <HoldIdString id2> }`: 
-      return splitHolds(stripQuotes("<id1>"), stripQuotes("<id2>"), src=RS@\loc);
+    case (RouteStep)`<HoldIdString id>`: return singleHold(stripQuotes("<id>"), src=RS@\loc);
+    case (RouteStep)`{ <HoldIdString id1> , <HoldIdString id2> }`: return splitHolds(stripQuotes("<id1>"), stripQuotes("<id2>"), src=RS@\loc);
     default: throw "Unhandled RouteStep: <RS>";
   }
 }
 
 // --- Volumes ---
 
-Volume cst2ast(Volume V) {
+labour::AST::VolumeAst cst2ast(Volume V) {
   switch (V) {
-    case (Volume)`circle { <{CircleProp ","}* props> }`:
-      return circle([cst2ast(p) | p <- props], src=V@\loc);
-    case (Volume)`triangle { <{TriangleProp ","}* props> }`:
-      return triangle([cst2ast(p) | p <- props], src=V@\loc);
+    case (Volume)`circle { <{CircleProp ","}* props> }`: return circle([cst2ast(p) | p <- props], src=V@\loc);
+    case (Volume)`triangle { <{TriangleProp ","}* props> }`: return triangle([cst2ast(p) | p <- props], src=V@\loc);
     default: throw "Unhandled Volume: <V>";
   }
 }
 
-CircleProp cst2ast(CircleProp CP) {
+labour::AST::CirclePropAst cst2ast(CircleProp CP) {
   switch (CP) {
     case (CircleProp)`pos : <Point p>`: return circlePos(cst2ast(p), src=CP@\loc);
     case (CircleProp)`depth : <Int d>`: return circleDepth(toInt("<d>"), src=CP@\loc);
@@ -118,7 +109,7 @@ CircleProp cst2ast(CircleProp CP) {
   }
 }
 
-TriangleProp cst2ast(TriangleProp TP) {
+labour::AST::TrianglePropAst cst2ast(TriangleProp TP) {
   switch (TP) {
     case (TriangleProp)`pos : <Point p>`: return trianglePos(cst2ast(p), src=TP@\loc);
     case (TriangleProp)`extrusion : <Point p>`: return triangleExtrusion(cst2ast(p), src=TP@\loc);

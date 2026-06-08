@@ -5,16 +5,14 @@ module labour::AST
  * - Hint: make sure there is an almost one-to-one correspondence with the grammar in Syntax.rsc
  */
 
-// --- 1. Shared Data (Must come first) ---
-
-data Point(loc src=|unknown:///|)
+// --- 1. Shared Data ---
+data PointAst(loc src=|unknown:///|)
   = point(int x, int y)
   ;
-  
-// --- 2. Holds ---
 
-data HoldProp(loc src=|unknown:///|)
-  = holdPos(Point p)
+// --- 2. Holds ---
+data HoldPropAst(loc src=|unknown:///|)
+  = holdPos(PointAst p)
   | holdAngle(int angle)
   | holdColours(list[str] colours)
   | holdShape(str shape)
@@ -23,54 +21,51 @@ data HoldProp(loc src=|unknown:///|)
   | endHold()
   ;
 
-data Hold(loc src=|unknown:///|)
-  = hold(str id, list[HoldProp] props)
+data HoldAst(loc src=|unknown:///|)
+  = hold(str id, list[HoldPropAst] props)
   ;
 
 // --- 3. Routes ---
-
-data RouteStep(loc src=|unknown:///|)
+data RouteStepAst(loc src=|unknown:///|)
   = singleHold(str id)
   | splitHolds(str splitA, str splitB)
   ;
 
-data RouteProp(loc src=|unknown:///|)
+data RoutePropAst(loc src=|unknown:///|)
   = grade(str grade)
-  | gridBasePoint(Point p)
-  | routeHolds(list[RouteStep] steps)
+  | gridBasePoint(PointAst p)
+  | routeHolds(list[RouteStepAst] steps)
   ;
 
-data Route(loc src=|unknown:///|)
-  = route(str id, list[RouteProp] props)
+data RouteAst(loc src=|unknown:///|)
+  = route(str id, list[RoutePropAst] props)
   ;
 
 // --- 4. Volumes ---
-
-data CircleProp(loc src=|unknown:///|)
-  = circlePos(Point p)
+data CirclePropAst(loc src=|unknown:///|)
+  = circlePos(PointAst p)
   | circleDepth(int d)
   | circleRadius(int r)
-  | circleFrontHolds(list[Hold] holds)
-  | circleSideHolds(list[Hold] holds)
+  | circleFrontHolds(list[HoldAst] holds)
+  | circleSideHolds(list[HoldAst] holds)
   ;
 
-data TriangleProp(loc src=|unknown:///|)
-  = trianglePos(Point p)
-  | triangleExtrusion(Point p)
+data TrianglePropAst(loc src=|unknown:///|)
+  = trianglePos(PointAst p)
+  | triangleExtrusion(PointAst p)
   | triangleDepth(int d)
-  | triangleCorners(list[Point] corners)
-  | triangleLeftHolds(list[Hold] holds)
-  | triangleRightHolds(list[Hold] holds)
-  | triangleBottomHolds(list[Hold] holds)
+  | triangleCorners(list[PointAst] corners)
+  | triangleLeftHolds(list[HoldAst] holds)
+  | triangleRightHolds(list[HoldAst] holds)
+  | triangleBottomHolds(list[HoldAst] holds)
   ;
 
-data Volume(loc src=|unknown:///|)
-  = circle(list[CircleProp] props)
-  | triangle(list[TriangleProp] props)
+data VolumeAst(loc src=|unknown:///|)
+  = circle(list[CirclePropAst] circleProps)
+  | triangle(list[TrianglePropAst] triangleProps)
   ;
 
-// --- 5. Main Wall (Uses everything defined above) ---
-
-data BoulderingWall(loc src=|unknown:///|)
-  = wall(str name, list[Route] routes, list[Volume] volumes)
+// --- 5. Main Wall ---
+data BoulderingWallAst(loc src=|unknown:///|)
+  = wall(str name, list[RouteAst] routes, list[VolumeAst] volumes)
   ;
