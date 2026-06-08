@@ -23,27 +23,165 @@ import String;
  * Some examples are provided below.
  */
 
+
+// 1. A helper to extract all Hold nodes from the wall
+list[Hold] getAllHolds(BoulderingWall wall) {
+  list[Hold] allHolds = [];
+  for (v <- wall.volumes) {
+    switch (v) {
+      case circle(props):
+        for (p <- props) {
+          if (circleFrontHolds(hs) := p) allHolds += hs;
+          if (circleSideHolds(hs) := p) allHolds += hs;
+        }
+      case triangle(props):
+        for (p <- props) {
+          if (triangleLeftHolds(hs) := p) allHolds += hs;
+          if (triangleRightHolds(hs) := p) allHolds += hs;
+          if (triangleBottomHolds(hs) := p) allHolds += hs;
+        }
+    }
+  }
+  return allHolds;
+}
+
+// 2. A helper to get a specific hold by its ID
+Hold getHoldById(BoulderingWall wall, str id) {
+  for (h <- getAllHolds(wall)) {
+    if (h.id == id) return h;
+  }
+  throw "Hold ID <id> not found in any volume!";
+}
+
+// 3. A helper to extract all hold IDs referenced in a Route
+list[str] getRouteHoldIds(Route r) {
+  list[str] ids = [];
+  for (p <- r.props) {
+    if (routeHolds(steps) := p) {
+      for (step <- steps) {
+        switch (step) {
+          case singleHold(id): ids += id;
+          case splitHolds(idA, idB): { ids += idA; ids += idB; }
+        }
+      }
+    }
+  }
+  return ids;
+}
+
 bool checkBoulderWallConfiguration(BoulderingWall wall){
   bool numberOfHolds = checkNumberOfHolds(wall);
-
   bool startingLabelLimit = checkStartingHoldsTotalLimit(wall);
   bool unique_end_hold = checkUniqueEndHold(wall);
+  
+  // Rule 1: Every wall must have at least one volume and one route
+  bool basicWallReqs = size(wall.routes) > 0 && size(wall.volumes) > 0;
 
-  return (numberOfHolds && startingLabelLimit && unique_end_hold);
+  return (numberOfHolds && startingLabelLimit && unique_end_hold && basicWallReqs);
 }
 
 
 // Check that there are at least two holds in the wall
 bool checkNumberOfHolds(BoulderingWall wall) {
-  return false;
+  for (r <- wall.routes) {
+    if (size(getRouteHoldIds(r)) < 2) {
+      println("Validation Failed: Route <r.id> has less than 2 holds.");
+      return false;
+    }
+  }
+  return true;
 }
-
 // Check that routes have between zero and two hand start holds
 bool checkStartingHoldsTotalLimit(BoulderingWall wall) {
-  return false;
+  for (r <- wall.routes) {
+    int startCount = 0;
+    list[str] routeIds = getRouteHoldIds(r);
+    
+    for (id <- routeIds) {
+      Hold h = getHoldById(wall, id);
+      // Check if this hold has a startHold property
+      for (prop <- h.props) {
+        if (startHold(_) := prop) {
+          startCount += 1;
+        }
+      }
+    }
+    
+    if (startCount > 2) {
+      println("Validation Failed: Route <r.id> has <startCount> start holds (max 2).");
+      return false;
+    }
+  }
+  return true;
 }
 
 // This function will insure that there is only one hold assign to end hold
 bool checkUniqueEndHold(BoulderingWall wall){
-  return false;
+  for (r <- wall.routes) {
+    int endCount = 0;
+    bool hasSplit = false;
+    
+    // Check if the route has a split
+    for (p <- r.props) {
+      if (routeHolds(steps) := p) {
+        for (step <- steps) {
+          if (splitHolds(_, _) := step) hasSplit = true;
+        }
+      }
+    }
+
+    // Count end holds
+    list[str] routeIds = getRouteHoldIds(r);
+    for (id <- routeIds) {
+      Hold h = getHoldById(wall, id);
+      for (prop <- h.props) {
+        if (endHold() := prop) endCount += 1;
+      }
+    }
+
+    if (!hasSplit && endCount > 1) {
+      println("Validation Failed: Route <r.id> does not split but has <endCount> end holds (max 1).");
+      return false;
+    }
+    if (hasSplit && endCount > 2) {
+      println("Validation Failed: Route <r.id> splits but has <endCount> end holds (max 2).");
+      return false;
+    }
+  }
+  return true;
+}
+
+// Rules 12, 13, 14: Ensure bounds for angles (0-359) and mandatory properties
+bool checkHoldProperties(BoulderingWall wall) {
+  for (h <- getAllHolds(wall)) {
+    bool hasPos = false;
+    bool hasShape = false;
+    bool hasColours = false;
+
+    for (p <- h.props) {
+      if (holdPos(_) := p) hasPos = true;
+      if (holdAngle(a) := p) {
+        hasPos = true;
+        if (a < 0 || a > 359) {
+          println("Validation Failed: Hold <h.id> angle <a> is out of bounds (0-359).");
+          return false;
+        }
+      }
+      if (holdShape(_) := p) hasShape = true;
+      if (holdColours(_) := p) hasColours = true;
+      
+      if (holdRotation(rot) := p) {
+         if (rot < 0 || rot > 359) {
+            println("Validation Failed: Hold <h.id> rotation <rot> is out of bounds (0-359).");
+            return false;
+         }
+      }
+    }
+
+    if (!hasPos || !hasShape || !hasColours) {
+      println("Validation Failed: Hold <h.id> is missing pos, shape, or colours.");
+      return false;
+    }
+  }
+  return true;
 }
