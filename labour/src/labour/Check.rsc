@@ -85,8 +85,10 @@ bool checkBoulderWallConfiguration(BoulderingWallAst wall){
   bool maxOneSplit     = checkMaxOneSplit(wall);
   bool colorMatch      = checkRouteColours(wall);
   bool propBounds      = checkHoldProperties(wall);
+  bool routeProps      = checkRouteProperties(wall);
+  bool volumeProps     = checkVolumeProperties(wall);
 
-  return (hasRequiredNodes && holdsCount && startHoldLimit && uniqueEndHold && maxOneSplit && colorMatch && propBounds);
+  return (hasRequiredNodes && holdsCount && startHoldLimit && uniqueEndHold && maxOneSplit && colorMatch && propBounds && routeProps && volumeProps);
 }
 
 
@@ -169,7 +171,6 @@ bool checkUniqueEndHold(BoulderingWallAst wall){
         }
       }
     }
-
     list[str] routeIds = getRouteHoldIds(r);
     for (id <- routeIds) {
       HoldAst h = getHoldById(wall, id);
@@ -241,6 +242,71 @@ bool checkHoldProperties(BoulderingWallAst wall) {
     if (!hasPos || !hasShape || !hasColours) {
       println("Validation Failed: Hold <h.id> is missing pos, shape, or colours.");
       return false;
+    }
+  }
+  return true;
+}
+
+// Rule 5: Every route must have a grade and a grid_base_point
+bool checkRouteProperties(BoulderingWallAst wall) {
+  for (r <- wall.routes) {
+    bool hasGrade = false;
+    bool hasGridBasePoint = false;
+    
+    for (p <- r.props) {
+      if (grade(_) := p) hasGrade = true;
+      if (gridBasePoint(_) := p) hasGridBasePoint = true;
+    }
+    
+    if (!hasGrade || !hasGridBasePoint) {
+      println("Validation Failed: Route <r.id> is missing a grade or grid_base_point (Rule 5).");
+      return false;
+    }
+  }
+  return true;
+}
+
+// Rules 17 and 19: Mandatory properties for Volumes
+bool checkVolumeProperties(BoulderingWallAst wall) {
+  for (v <- wall.volumes) {
+    switch (v) {
+      case circle(props): {
+        bool hasPos = false;
+        bool hasDepth = false;
+        bool hasRadius = false;
+        for (p <- props) {
+          if (circlePos(_) := p) hasPos = true;
+          if (circleDepth(_) := p) hasDepth = true;
+          if (circleRadius(_) := p) hasRadius = true;
+        }
+        if (!hasPos || !hasDepth || !hasRadius) {
+          println("Validation Failed: A circle volume is missing its pos, depth, or radius (Rule 17).");
+          return false;
+        }
+      }
+      case triangle(props): {
+        bool hasPos = false;
+        bool hasDepth = false;
+        bool hasExtrusion = false;
+        bool hasValidCorners = false;
+        for (p <- props) {
+          if (trianglePos(_) := p) hasPos = true;
+          if (triangleDepth(_) := p) hasDepth = true;
+          if (triangleExtrusion(_) := p) hasExtrusion = true;
+          if (triangleCorners(corners) := p) {
+            if (size(corners) == 3) {
+              hasValidCorners = true;
+            } else {
+              println("Validation Failed: Triangle has <size(corners)> corners, expected exactly 3 (Rule 19).");
+              return false; 
+            }
+          }
+        }
+        if (!hasPos || !hasDepth || !hasExtrusion || !hasValidCorners) {
+          println("Validation Failed: A triangle volume is missing pos, depth, extrusion, or exactly 3 corners (Rule 19).");
+          return false;
+        }
+      }
     }
   }
   return true;

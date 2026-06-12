@@ -7,10 +7,11 @@ bouldering_wall "Invalid Wall 16" {
     }
   ],
   volumes [
-    square {        // Square is not a valid volume type.
+    cuboid {        // Valid volume type: cuboid
       pos: {x: 10, y: 10},
       depth: 10,
-      side: 50,
+      width: 50,
+      height: 50,
       front_holds [
         hold "0001" { 
             pos: {x: 1, y: 1}, 

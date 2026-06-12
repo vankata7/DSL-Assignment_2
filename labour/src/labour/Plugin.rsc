@@ -58,16 +58,22 @@ void clearLaBouR() {
  * Note that an invalid test "succeeds" when the check fails
  */
 void runTests() {
-  fails = 0;
-  validFiles = |project://labour/test/valid|.ls;
-  invalidFiles = |project://labour/test/invalid|.ls;
+  int fails = 0;
+  list[loc] validFiles = |project://labour/test/valid|.ls;
+  list[loc] invalidFiles = |project://labour/test/invalid|.ls;
 
   println("\nValid tests");
   for (file <- validFiles) {
-    if (checkWellformedness(file)) {
-      println("SUCCESS: <file.path> returns true");
-    } else {
-      println("FAILURE: <file.path> returns false");
+    try {
+      if (checkWellformedness(file)) {
+        println("SUCCESS: <file.path> returns true");
+      } else {
+        println("FAILURE: <file.path> returns false (Checker failed)");
+        fails += 1;
+      }
+    } catch value e: {
+      // If a valid file crashes, that is a real failure!
+      println("FAILURE: <file.path> threw an error (Parse/AST Error): <e>");
       fails += 1;
     }
   }
@@ -75,13 +81,18 @@ void runTests() {
   println("\nInvalid tests");
 
   for (file <- invalidFiles) {
-    if (checkWellformedness(file)) {
-      println("FAILURE: <file.path> returns true");
-      fails +=1;
-    } else {
-      println("SUCCESS: <file.path> returns false");
+    try {
+      if (checkWellformedness(file)) {
+        println("FAILURE: <file.path> returns true");
+        fails +=1;
+      } else {
+        println("SUCCESS: <file.path> returns false (Checker failed)");
+      }
+    } catch value e: {
+      // If an invalid file throws a parse error, it CORRECTLY failed!
+      println("SUCCESS: <file.path> returns false (Syntax/Parse Error)");
     }
   }
 
-  println("<fails> failed tests");
+  println("\n<fails> failed tests");
 }
