@@ -1,0 +1,29 @@
+bouldering_wall "Invalid Wall 9" {
+  routes [
+    bouldering_route "Route 9" {
+      grade: "7A",
+      grid_base_point {x: 0, y: 0},
+      holds ["001", "0002"]     // Hold ID has 3 digits.
+    }
+  ],
+  volumes [
+    circle {
+      pos: {x: 0, y: 0},
+      depth: 10,
+      radius: 50,
+      front_holds [
+        hold "123" { 
+            pos: {x: 1, y: 1}, 
+            shape: "1", 
+            colours [white] 
+        },
+        hold "0002" { 
+            pos: {x: 2, y: 2}, 
+            shape: "2", 
+            colours [white] 
+        }
+      ],
+      side_holds []
+    }
+  ]
+}

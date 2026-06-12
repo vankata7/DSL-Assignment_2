@@ -1,0 +1,32 @@
+bouldering_wall "Invalid Wall 5" {
+  routes [
+    bouldering_route "Route 5" {    // No grade, grid base point and identifier.
+      holds ["0001", {"0002", "0003"}]
+    }
+  ],
+  volumes [
+    circle {
+      pos: {x: 0, y: 0},
+      depth: 10,
+      radius: 50,
+      front_holds [
+        hold "0001" { 
+          pos: {x: 0, y: 0}, 
+          shape: "1", 
+          colours [white] 
+        },
+        hold "0002" { 
+          pos: {x: 1, y: 1}, 
+          shape: "2", 
+          colours [white] 
+        },
+        hold "0003" { 
+          pos: {x: 2, y: 2}, 
+          shape: "3", 
+          colours [white] 
+        }
+      ],
+      side_holds []
+    }
+  ]
+}

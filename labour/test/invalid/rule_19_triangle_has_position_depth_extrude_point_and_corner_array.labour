@@ -1,0 +1,28 @@
+bouldering_wall "Invalid Wall 19" {
+  routes [
+    bouldering_route "Route 19" {
+      grade: "7A",
+      grid_base_point {x: 0, y: 0},
+      holds ["0001", "0002"]
+    }
+  ],
+  volumes [
+    triangle {
+      // No position, depth, extrusion, and corner array.
+      left_holds [
+        hold "0001" { 
+            pos: {x: 1, y: 1}, 
+            shape: "1", 
+            colours [white] 
+        },
+        hold "0002" { 
+            pos: {x: 2, y: 2}, 
+            shape: "2", 
+            colours [white] 
+        }
+      ],
+      right_holds [],
+      bottom_holds []
+    }
+  ]
+}

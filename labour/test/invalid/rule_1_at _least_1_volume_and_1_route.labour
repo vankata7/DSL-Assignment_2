@@ -1,0 +1,6 @@
+bouldering_wall "Invalid Wall 1" {
+  routes [        // The routes array is empty.
+  ],
+  volumes [       // The volumes array is empty.
+  ]
+}

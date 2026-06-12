@@ -1,0 +1,29 @@
+bouldering_wall "Invalid Wall 13" {
+  routes [
+    bouldering_route "Route 13" {
+      grade: "7A",
+      grid_base_point {x: 0, y: 0},
+      holds ["0001", "0002"]
+    }
+  ],
+  volumes [
+    circle {
+      pos: {x: 0, y: 0}, 
+      depth: 10, 
+      radius: 50,
+      front_holds [
+        hold "0001" { 
+            pos: {x: 1, y: 1}, 
+            shape: "1", 
+            colours [white] }
+      ],
+      side_holds [
+        hold "0002" { 
+          pos: {angle: 360},  // The angle is out of range.
+          shape: "2", 
+          colours [white] 
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+bouldering_wall "Invalid Wall 8" {
+  routes [
+    bouldering_route "Route 8" {
+      grade: "7A",
+      grid_base_point {x: 0, y: 0},
+      holds ["0001", {"0002", "0003"}, "0004", {"0005", "0006"} ]  //Route contains split after merge.
+    }
+  ],
+  volumes [
+    circle {
+      pos: {x: 0, y: 0},
+      depth: 10,
+      radius: 50,
+      front_holds [
+        hold "0001" { 
+          pos: {x: 0, y: 0}, 
+          shape: "1", 
+          colours [white]
+        },
+        hold "0002" { 
+          pos: {x: 1, y: 1}, 
+          shape: "2", 
+          colours [white] 
+        },
+        hold "0003" { 
+          pos: {x: 2, y: 2}, 
+          shape: "3", 
+          colours [white] 
+        },
+        hold "0004" { 
+          pos: {x: 3, y: 3}, 
+          shape: "4", 
+          colours [white] 
+        },
+        hold "0005" { 
+          pos: {x: 4, y: 4}, 
+          shape: "1", 
+          colours [white]
+        },
+        hold "0006" { 
+          pos: {x: 5, y: 5}, 
+          shape: "1", 
+          colours [white]
+        }
+      ],
+      side_holds []
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+bouldering_wall "Invalid Wall 20" {
+  routes [
+    bouldering_route "Route 20" {
+      grade: "7A",
+      grid_base_point {x: 0, y: 0},
+      holds ["0001", "0002"]
+    }
+  ],
+  volumes [
+    triangle {
+      pos: {x: 0, y: 0},
+      extrusion: {x: 10, y: 10},
+      depth: 40,
+      corners [
+        {x: 20, y: 0},
+        {x: -20, y: 0},
+        {x: 0, y: 30}
+      ],
+      front_holds [           // Triangle cannot contain a front_holds list.
+        hold "0001" { 
+            pos: {x: 1, y: 1}, 
+            shape: "1", 
+            colours [white] 
+        },
+        hold "0002" { 
+            pos: {x: 2, y: 2}, 
+            shape: "2", 
+            colours [white] 
+        }
+      ],
+      left_holds [],
+      right_holds [],
+      bottom_holds []
+    }
+  ]
+}

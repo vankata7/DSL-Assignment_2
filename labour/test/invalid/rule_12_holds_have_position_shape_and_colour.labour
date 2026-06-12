@@ -1,0 +1,31 @@
+bouldering_wall "Invalid Wall 12" {
+  routes [
+    bouldering_route "Route 12" {
+      grade: "7A",
+      grid_base_point {x: 0, y: 0},
+      holds ["0001", "0002", "0003"]
+    }
+  ],
+  volumes [
+    circle {
+      pos: {x: 0, y: 0}, 
+      depth: 10, 
+      radius: 50,
+      front_holds [
+        hold "0001" {   // Missing shape
+          pos: {x: 1, y: 1}, 
+          colours [white] 
+        },
+        hold "0002" {   // Missing colours
+          pos: {x: 2, y: 2}, 
+          shape: "1"        
+        },
+        hold "0003" {   // Missing position
+          shape: "2", 
+          colours [white]      
+        }
+      ],
+      side_holds []
+    }
+  ]
+}
